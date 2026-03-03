@@ -11,7 +11,6 @@ public class AppDbContext : DbContext
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Doctor> Doctors => Set<Doctor>();
     public DbSet<Consultation> Consultations => Set<Consultation>();
-
     public DbSet<Staff> Staff => Set<Staff>();
     public DbSet<Nurse> Nurses => Set<Nurse>();
     public DbSet<AdminStaff> AdminStaff => Set<AdminStaff>();
@@ -20,17 +19,23 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ── Patient ──────────────────────────────────────────────
         modelBuilder.Entity<Patient>(entity =>
         {
+            // Unicité
             entity.HasIndex(p => p.FileNumber).IsUnique();
             entity.HasIndex(p => p.Email).IsUnique();
+
+            // Index pour recherche rapide par nom (étape 7)
+            entity.HasIndex(p => p.LastName)
+                  .HasDatabaseName("IX_Patient_LastName");
+
+            // Contrainte CHECK date de naissance
             entity.ToTable("Patients", t => t.HasCheckConstraint(
                 "CK_Patient_DateOfBirth",
                 "\"DateOfBirth\" < date('now')"
             ));
 
-            // Owned Entity Address — colonnes préfixées Address_
+            // Owned Entity Address
             entity.OwnsOne(p => p.Address, address =>
             {
                 address.Property(a => a.Street).HasColumnName("Address_Street");
@@ -38,14 +43,16 @@ public class AppDbContext : DbContext
                 address.Property(a => a.ZipCode).HasColumnName("Address_ZipCode");
                 address.Property(a => a.Country).HasColumnName("Address_Country");
             });
+
+            // Concurrency Token
+            entity.Property(p => p.RowVersion)
+                  .IsRowVersion();
         });
 
-        // ── Department ───────────────────────────────────────────
         modelBuilder.Entity<Department>(entity =>
         {
             entity.HasIndex(d => d.Name).IsUnique();
 
-            // Auto-référence pour la hiérarchie de départements
             entity.HasOne(d => d.ParentDepartment)
                   .WithMany(d => d.SubDepartments)
                   .HasForeignKey(d => d.ParentDepartmentId)
@@ -69,11 +76,14 @@ public class AppDbContext : DbContext
             .HasForeignKey<Department>(dep => dep.HeadDoctorId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // ── Consultation ─────────────────────────────────────────
         modelBuilder.Entity<Consultation>(entity =>
         {
             entity.HasIndex(c => new { c.PatientId, c.DoctorId, c.Date })
                   .IsUnique();
+
+            // Index pour lister les consultations d'un médecin par date
+            entity.HasIndex(c => new { c.DoctorId, c.Date })
+                  .HasDatabaseName("IX_Consultation_DoctorId_Date");
 
             entity.HasOne(c => c.Patient)
                   .WithMany(p => p.Consultations)
@@ -86,9 +96,6 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ── TPH Staff ─────────────────────────────────────────────
-        // Stratégie TPH : une seule table "Staff" avec colonne discriminante
-        // EF Core gère automatiquement la colonne "Discriminator"
         modelBuilder.Entity<Staff>()
             .HasDiscriminator<string>("StaffType")
             .HasValue<Doctor>("Doctor")

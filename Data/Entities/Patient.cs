@@ -37,9 +37,11 @@ public class Patient
     [StringLength(20)]
     public string Phone { get; set; } = string.Empty;
 
-    // Owned Entity — remplace l'ancien champ Address string
     [Required(ErrorMessage = "L'adresse est obligatoire.")]
     public Address Address { get; set; } = new();
+    
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = null!;
 
     public ICollection<Consultation> Consultations { get; set; } = new List<Consultation>();
 }
