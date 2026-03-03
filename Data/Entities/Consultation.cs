@@ -25,6 +25,6 @@ public class Consultation
     public string? Notes { get; set; }
 
     // Navigation
-    public Patient Patient { get; set; } = null!;
-    public Doctor Doctor { get; set; } = null!;
+    public Patient? Patient { get; set; }
+    public Doctor? Doctor { get; set; }
 }

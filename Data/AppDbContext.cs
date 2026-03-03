@@ -29,12 +29,6 @@ public class AppDbContext : DbContext
             entity.HasIndex(p => p.LastName)
                   .HasDatabaseName("IX_Patient_LastName");
 
-            // Contrainte CHECK date de naissance
-            entity.ToTable("Patients", t => t.HasCheckConstraint(
-                "CK_Patient_DateOfBirth",
-                "\"DateOfBirth\" < date('now')"
-            ));
-
             // Owned Entity Address
             entity.OwnsOne(p => p.Address, address =>
             {
@@ -45,8 +39,7 @@ public class AppDbContext : DbContext
             });
 
             // Concurrency Token
-            entity.Property(p => p.RowVersion)
-                  .IsRowVersion();
+            entity.Property(p => p.RowVersion).IsRowVersion();
         });
 
         modelBuilder.Entity<Department>(entity =>

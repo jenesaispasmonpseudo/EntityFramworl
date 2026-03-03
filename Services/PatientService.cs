@@ -101,7 +101,8 @@ public class PatientService
     public async Task<Dictionary<string, int>> CountPatientsByDepartmentAsync()
     {
         return await _context.Consultations
-            .GroupBy(c => c.Doctor.Department.Name)
+            .Where(c => c.Doctor != null && c.Doctor.Department != null)
+            .GroupBy(c => c.Doctor!.Department!.Name)
             .Select(g => new { Department = g.Key, Count = g.Select(c => c.PatientId).Distinct().Count() })
             .AsNoTracking()
             .ToDictionaryAsync(x => x.Department, x => x.Count);

@@ -39,9 +39,9 @@ public class Patient
 
     [Required(ErrorMessage = "L'adresse est obligatoire.")]
     public Address Address { get; set; } = new();
-    
+
     [Timestamp]
-    public byte[] RowVersion { get; set; } = null!;
+    public byte[]? RowVersion { get; set; }
 
     public ICollection<Consultation> Consultations { get; set; } = new List<Consultation>();
 }

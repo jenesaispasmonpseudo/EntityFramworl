@@ -17,7 +17,7 @@ public class Doctor : Staff
     [Required]
     public int DepartmentId { get; set; }
 
-    public Department Department { get; set; } = null!;
+    public Department? Department { get; set; }
 
     public ICollection<Consultation> Consultations { get; set; } = [];
 }
